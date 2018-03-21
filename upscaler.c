@@ -1,6 +1,5 @@
 #include <stdlib.h>
-#include <stdio.h>
-
+#include <stdio.h> 
 void saveBitmap(char ***, int width, int height, FILE * inputFile, int scale);
 int getWidth(FILE * file);
 int getHeight(FILE * file);
@@ -20,15 +19,9 @@ int main(int argc, char ** argv) {
 	}
 
 	FILE * inputFile = fopen(argv[2], "rb");
-	FILE * outputFile = fopen(argv[3], "wb");
 
 	if (inputFile == NULL) {
 		fprintf(stderr, "error: input file %s could not be opened\n", argv[2]);
-		exit(1);
-	}
-
-	if (outputFile == NULL) {
-		fprintf(stderr, "error: output file %s could not be opened\n", argv[3]);
 		exit(1);
 	}
 
@@ -38,6 +31,13 @@ int main(int argc, char ** argv) {
 	char *** image = loadImage(inputFile, width, height);
 
 	fclose(inputFile);
+
+	FILE * outputFile = fopen(argv[3], "wb");
+	if (outputFile == NULL) {
+		fprintf(stderr, "error: output file %s could not be opened\n", argv[3]);
+		freeImage(image, width, height);
+		exit(1);
+	}
 
 	saveBitmap(image, width, height, outputFile, scale);
 
@@ -63,9 +63,9 @@ void saveBitmap(char *** image, int oldWidth, int oldHeight, FILE * outputFile, 
 	//IMAGE
 	fwrite(&headerSize, sizeof(int), 1, outputFile); // HEADER SIZE
 	fwrite(&newWidth, sizeof(int), 1, outputFile); // WIDTH
-	newHeight = -newHeight;
+	newHeight = -newHeight; // height is negative as top to bottom
 	fwrite(&newHeight, sizeof(int), 1, outputFile); // HEIGHT height = -height;
-	newHeight = -newHeight;
+	newHeight = -newHeight; // put it back to positive
                
 	fwrite(&one, sizeof(char) * 2, 1, outputFile); // ONE (2 BYTES)
 	fwrite(&bpp, sizeof(char) * 2, 1, outputFile); // BITS PER PIXEL  (2 BYTES)
@@ -99,8 +99,8 @@ void saveBitmap(char *** image, int oldWidth, int oldHeight, FILE * outputFile, 
 		}
 	}
 
-	freeImage(newImage, oldHeight * scale, oldWidth * scale);
-
+	freeImage(newImage, oldWidth * scale, oldHeight * scale);
+	
 	fclose(outputFile);
 }
 
