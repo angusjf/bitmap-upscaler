@@ -1,9 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h> 
-void saveBitmap(char *** image, int width, int height, FILE * inputFile, int scale);
+
 int getWidth(FILE * file);
 int getHeight(FILE * file);
+int getOffset(FILE * file);
+int getBitsPerPixel(FILE * file);
 char *** loadImage(FILE * file, int width, int height);
+void saveBitmap(char *** image, int width, int height, FILE * inputFile, int scale);
 void freeImage(char *** image, int width, int height);
 
 int main(int argc, char ** argv) {
@@ -12,9 +15,9 @@ int main(int argc, char ** argv) {
 		exit(1);
 	}
 
-	int scale = (argv[1][0] - '0');
-	if (scale < 2) {
-		fprintf(stderr, "error: attemped to scale by %i (scale must be greater than 1)\n", scale);
+	int scale = argv[1][0] - '0';
+	if (scale < 1) {
+		fprintf(stderr, "error: attemped to scale by %i (scale must be greater than 0)\n", scale);
 		exit(1);
 	}
 
@@ -47,6 +50,68 @@ int main(int argc, char ** argv) {
 	freeImage(image, width, height);
 
 	return 0;
+}
+
+int getWidth(FILE * file) {
+	int width;
+	fseek (file, 18, SEEK_SET);
+	fread(&width, sizeof(int), 1, file);
+	return width;
+}
+
+int getHeight(FILE * file) {
+	int height;
+	fseek (file, 22, SEEK_SET);
+	fread(&height, sizeof(int), 1, file);
+	return height;
+}
+
+int getOffset(FILE * file) {
+	int offset;
+	fseek (file, 10, SEEK_SET);
+	fread(&offset, sizeof(int), 1, file);
+	return offset;
+}
+
+int getBitsPerPixel(FILE * file) {
+	int bpp;
+	fseek (file, 28, SEEK_SET);
+	fread(&bpp, sizeof(int), 1, file);
+	return bpp;
+}
+
+char *** loadImage(FILE * imageFile, int width, int height) {
+
+	int upsideDown = height < 0 ? 0 : 1;
+	height = height > 0 ? height : -height;
+
+	int bitsPerPixel = getBitsPerPixel(imageFile);
+
+	char *** output = (char ***)malloc(sizeof(char **) * height);
+
+	int offset = getOffset(imageFile);
+	fseek (imageFile, offset, SEEK_SET);
+	
+	for (int i = 0; i < height; i++) {
+		int y = upsideDown ? height - i - 1 : i;
+		output[y] = (char **)malloc(sizeof(char *) * width);
+		for (int j = 0; j < width; j++) {
+			int x = j;
+			output[y][x] = (char *)malloc(sizeof(char) * 3);
+			unsigned char red, green, blue, alpha;
+			fread(&blue, sizeof(char), 1, imageFile); // BLUE
+			fread(&green, sizeof(char), 1, imageFile); // GREEN
+			fread(&red, sizeof(char), 1, imageFile); // RED
+			if (bitsPerPixel == 32) {
+				fread(&alpha, sizeof(char), 1, imageFile); // ALPHA
+			}
+			output[y][x][0] = red;
+			output[y][x][1] = green;
+			output[y][x][2] = blue;
+		}
+	}
+	
+	return output;
 }
 
 void saveBitmap(char *** image, int oldWidth, int oldHeight, FILE * outputFile, int scale) {
@@ -105,66 +170,6 @@ void saveBitmap(char *** image, int oldWidth, int oldHeight, FILE * outputFile, 
 	freeImage(newImage, oldWidth * scale, oldHeight * scale);
 	
 	fclose(outputFile);
-}
-
-int getWidth(FILE * file) {
-	int width;
-	fseek (file, 18, SEEK_SET);
-	fread(&width, sizeof(int), 1, file);
-	return width;
-}
-
-int getHeight(FILE * file) {
-	int height;
-	fseek (file, 22, SEEK_SET);
-	fread(&height, sizeof(int), 1, file);
-	return height;
-}
-
-char *** loadImage(FILE * imageFile, int width, int height) {
-
-	int upsideDown = height < 0 ? 1 : 0;
-	height = height > 0 ? height : -height;
-
-	char *** output = (char ***)malloc(sizeof(char **) * height);
-
-	fseek (imageFile, 53, SEEK_SET);
-	
-	if (upsideDown) {
-		for (int i = height - 1; i >= 0; i++) {
-			output[i] = (char **)malloc(sizeof(char *) * width);
-			for (int j = 0; j < width; j++) {
-				output[i][j] = (char *)malloc(sizeof(char) * 3);
-				unsigned char red, green, blue, alpha;
-				fread(&alpha, sizeof(char), 1, imageFile); // ALPHA
-				fread(&blue, sizeof(char), 1, imageFile); // BLUE
-				fread(&green, sizeof(char), 1, imageFile); // GREEN
-				fread(&red, sizeof(char), 1, imageFile); // RED
-
-				output[i][j][0] = red;
-				output[i][j][1] = green;
-				output[i][j][2] = blue;
-			}
-		}
-	} else {
-		for (int i = 0; i < height; i++) {
-			output[i] = (char **)malloc(sizeof(char *) * width);
-			for (int j = 0; j < width; j++) {
-				output[i][j] = (char *)malloc(sizeof(char) * 3);
-				unsigned char red, green, blue, alpha;
-				fread(&alpha, sizeof(char), 1, imageFile); // ALPHA
-				fread(&blue, sizeof(char), 1, imageFile); // BLUE
-				fread(&green, sizeof(char), 1, imageFile); // GREEN
-				fread(&red, sizeof(char), 1, imageFile); // RED
-
-				output[i][j][0] = red;
-				output[i][j][1] = green;
-				output[i][j][2] = blue;
-			}
-		}
-	}
-	
-	return output;
 }
 
 void freeImage(char *** image, int width, int height) {
