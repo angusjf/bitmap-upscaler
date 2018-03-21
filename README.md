@@ -8,7 +8,7 @@ gcc upscaler.c -o upscaler
 
 ## example usage
 
-to upscale a 16x16 bitmap called `sprite.bmp` by a factor of 3 to a 48x48 bitmap called 
+to upscale a 16x16 bitmap called `sprite.bmp` by a factor of 3 to a 48x48 bitmap called `output.bmp`
 ```
 ./upscaler 3 sprite.bmp output.bmp
 ```
