@@ -5,7 +5,7 @@ int getWidth(FILE * file);
 int getHeight(FILE * file);
 int getOffset(FILE * file);
 int getBitsPerPixel(FILE * file);
-char *** loadImage(FILE * file, int width, int height);
+char *** loadImage(FILE * file, int width, int height, int upsideDown);
 void saveBitmap(char *** image, int width, int height, FILE * inputFile, int scale);
 void freeImage(char *** image, int width, int height);
 
@@ -15,7 +15,7 @@ int main(int argc, char ** argv) {
 		exit(1);
 	}
 
-	int scale = argv[1][0] - '0';
+	int scale = argv[1][0] - '0'; // convert to int
 	if (scale < 1) {
 		fprintf(stderr, "error: attemped to scale by %i (scale must be greater than 0)\n", scale);
 		exit(1);
@@ -31,10 +31,13 @@ int main(int argc, char ** argv) {
 	int width = getWidth(inputFile);
 	int height = getHeight(inputFile);
 
-	char *** image = loadImage(inputFile, width, height);
+	int upsideDown = 1;
+	if (height < 0) {
+		upsideDown = 0;
+		height = -height;
+	}
 
-	// make height always positive
-	height = height > 0 ? height : -height;
+	char *** image = loadImage(inputFile, width, height, upsideDown);
 
 	fclose(inputFile);
 
@@ -80,10 +83,7 @@ int getBitsPerPixel(FILE * file) {
 	return bpp;
 }
 
-char *** loadImage(FILE * imageFile, int width, int height) {
-
-	int upsideDown = height < 0 ? 0 : 1;
-	height = height > 0 ? height : -height;
+char *** loadImage(FILE * imageFile, int width, int height, int upsideDown) {
 
 	int bitsPerPixel = getBitsPerPixel(imageFile);
 
