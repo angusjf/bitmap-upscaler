@@ -1,14 +1,14 @@
-# bitmap upscaler
+# Bitmap Upscaler
 
-upscale any .bmp by any amount, simply making every 1 pixel in the input to n by n in the output 
+Tool to upscale any .bmp by any amount, simply making every 1 pixel in the input to n by n in the output.
 
-## to compile
-
+## To Compile
+```
 gcc upscaler.c -o upscaler
+```
+## Example Usage
 
-## example usage
-
-to upscale a 16x16 bitmap called `sprite.bmp` by a factor of 3 to a 48x48 bitmap called `output.bmp`
+To upscale a 16x16 bitmap called `sprite.bmp` by a factor of 3 to a 48x48 bitmap called `output.bmp`.
 ```
 ./upscaler 3 sprite.bmp output.bmp
 ```
