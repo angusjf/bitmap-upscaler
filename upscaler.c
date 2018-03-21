@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h> 
-void saveBitmap(char ***, int width, int height, FILE * inputFile, int scale);
+void saveBitmap(char *** image, int width, int height, FILE * inputFile, int scale);
 int getWidth(FILE * file);
 int getHeight(FILE * file);
 char *** loadImage(FILE * file, int width, int height);
@@ -29,6 +29,9 @@ int main(int argc, char ** argv) {
 	int height = getHeight(inputFile);
 
 	char *** image = loadImage(inputFile, width, height);
+
+	// make height always positive
+	height = height > 0 ? height : -height;
 
 	fclose(inputFile);
 
@@ -115,27 +118,49 @@ int getHeight(FILE * file) {
 	int height;
 	fseek (file, 22, SEEK_SET);
 	fread(&height, sizeof(int), 1, file);
-	return -height; // height is negative as top to bottom
+	return height;
 }
 
 char *** loadImage(FILE * imageFile, int width, int height) {
+
+	int upsideDown = height < 0 ? 1 : 0;
+	height = height > 0 ? height : -height;
+
 	char *** output = (char ***)malloc(sizeof(char **) * height);
 
 	fseek (imageFile, 53, SEEK_SET);
+	
+	if (upsideDown) {
+		for (int i = height - 1; i >= 0; i++) {
+			output[i] = (char **)malloc(sizeof(char *) * width);
+			for (int j = 0; j < width; j++) {
+				output[i][j] = (char *)malloc(sizeof(char) * 3);
+				unsigned char red, green, blue, alpha;
+				fread(&alpha, sizeof(char), 1, imageFile); // ALPHA
+				fread(&blue, sizeof(char), 1, imageFile); // BLUE
+				fread(&green, sizeof(char), 1, imageFile); // GREEN
+				fread(&red, sizeof(char), 1, imageFile); // RED
 
-	for (int i = 0; i < height; i++) {
-		output[i] = (char **)malloc(sizeof(char *) * width);
-		for (int j = 0; j < width; j++) {
-			output[i][j] = (char *)malloc(sizeof(char) * 3);
-			unsigned char red, green, blue, alpha;
-			fread(&alpha, sizeof(char), 1, imageFile); // ALPHA
-			fread(&blue, sizeof(char), 1, imageFile); // BLUE
-			fread(&green, sizeof(char), 1, imageFile); // GREEN
-			fread(&red, sizeof(char), 1, imageFile); // RED
+				output[i][j][0] = red;
+				output[i][j][1] = green;
+				output[i][j][2] = blue;
+			}
+		}
+	} else {
+		for (int i = 0; i < height; i++) {
+			output[i] = (char **)malloc(sizeof(char *) * width);
+			for (int j = 0; j < width; j++) {
+				output[i][j] = (char *)malloc(sizeof(char) * 3);
+				unsigned char red, green, blue, alpha;
+				fread(&alpha, sizeof(char), 1, imageFile); // ALPHA
+				fread(&blue, sizeof(char), 1, imageFile); // BLUE
+				fread(&green, sizeof(char), 1, imageFile); // GREEN
+				fread(&red, sizeof(char), 1, imageFile); // RED
 
-			output[i][j][0] = red;
-			output[i][j][1] = green;
-			output[i][j][2] = blue;
+				output[i][j][0] = red;
+				output[i][j][1] = green;
+				output[i][j][2] = blue;
+			}
 		}
 	}
 	
