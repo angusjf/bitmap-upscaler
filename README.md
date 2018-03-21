@@ -1,6 +1,6 @@
 # Bitmap Upscaler
 
-Tool to nearest-neighbour upscale any .bmp by any integer amount, simply making every 1 pixel in the input to n by n in the output.
+Tool to nearest-neighbour upscale any .bmp by any integer amount, simply making every 1 pixel in the input to n by n in the output. This tool only works with _32 or 24 bits per pixel_, _uncompressed_ .bmp files.
 
 ## To Compile
 ```
